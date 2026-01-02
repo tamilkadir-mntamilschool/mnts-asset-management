@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AssetsPage from '../pages/Assets.vue'
+import AssetDetailPage from '../pages/AssetDetail.vue'
+import AssetPrintPage from '../pages/AssetPrint.vue'
 import AuthPage from '../pages/Auth.vue'
 import { useSessionStore } from '../stores/session'
 
@@ -15,6 +17,24 @@ const router = createRouter({
       path: '/assets',
       name: 'assets',
       component: AssetsPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/assets/:id',
+      name: 'asset-detail',
+      component: AssetDetailPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/assets/:id/print',
+      name: 'asset-print',
+      component: AssetPrintPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/assets/code/:code',
+      name: 'asset-code',
+      component: AssetDetailPage,
       meta: { requiresAuth: true },
     },
     {
