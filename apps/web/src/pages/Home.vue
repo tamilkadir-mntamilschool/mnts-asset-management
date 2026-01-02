@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
         <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
           <h2 class="text-lg font-semibold">Inventory</h2>
           <p class="mt-2 text-sm text-slate-300">
-            Capture assets, assign categories, and monitor status in real time.
+            Capture assets, assign categories, and monitor loans in real time.
           </p>
         </div>
         <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">

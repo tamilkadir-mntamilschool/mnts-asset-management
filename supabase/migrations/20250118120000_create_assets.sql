@@ -5,7 +5,6 @@ create table if not exists public.assets (
   user_id uuid not null default auth.uid(),
   name text not null,
   category text,
-  status text not null default 'Operational',
   location text,
   description text,
   created_at timestamptz not null default now(),
@@ -13,7 +12,6 @@ create table if not exists public.assets (
 );
 
 create index if not exists assets_user_id_idx on public.assets (user_id);
-create index if not exists assets_status_idx on public.assets (status);
 
 create or replace function public.set_updated_at()
 returns trigger as $$

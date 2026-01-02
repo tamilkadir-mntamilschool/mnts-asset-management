@@ -30,7 +30,6 @@
 - cultural_significance (optional)
 - handling_notes (optional)
 - photos (list of attachment ids)
-- status (available/checked_out/retired)
 - created_by
 - created_at
 - updated_at

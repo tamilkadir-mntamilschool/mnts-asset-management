@@ -12,14 +12,11 @@ import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { useSessionStore } from '@/stores/session'
 import SidebarLayout from '../layouts/SidebarLayout.vue'
 
-type AssetStatus = 'Operational' | 'Needs Service' | 'Offline'
-
 type AssetRecord = {
   id: string
   asset_code: string
   name: string
   category: string | null
-  status: AssetStatus
   location: string | null
   description: string | null
   updated_at: string
@@ -32,7 +29,6 @@ type Asset = {
   assetCode: string
   name: string
   category: string
-  status: AssetStatus
   location: string
   description: string
   updatedAt: string
@@ -106,7 +102,6 @@ const isEditing = ref(false)
 const editAsset = ref({
   name: '',
   category: '',
-  status: 'Operational' as AssetStatus,
   location: '',
   description: '',
 })
@@ -119,18 +114,11 @@ const assetUrl = computed(() => {
   return `${window.location.origin}/assets/code/${asset.value.assetCode}`
 })
 
-const statusBadgeClass = (status: AssetStatus) => {
-  if (status === 'Operational') return 'border-emerald-400/40 bg-emerald-400/15 text-emerald-100'
-  if (status === 'Needs Service') return 'border-amber-400/50 bg-amber-400/15 text-amber-100'
-  return 'border-rose-400/50 bg-rose-500/20 text-rose-100'
-}
-
 const mapAssetRecord = (record: AssetRecord): Asset => ({
   id: record.id,
   assetCode: record.asset_code,
   name: record.name,
   category: record.category ?? 'Uncategorized',
-  status: record.status,
   location: record.location ?? 'Unassigned',
   description: record.description ?? '',
   updatedAt: record.updated_at?.slice(0, 10) ?? '—',
@@ -207,7 +195,6 @@ const setEditFromAsset = () => {
   editAsset.value = {
     name: asset.value.name,
     category: asset.value.category === 'Uncategorized' ? '' : asset.value.category,
-    status: asset.value.status,
     location: asset.value.location === 'Unassigned' ? '' : asset.value.location,
     description: asset.value.description ?? '',
   }
@@ -224,9 +211,7 @@ const fetchAsset = async () => {
 
   const query = supabase
     .from('assets')
-    .select(
-      'id, asset_code, name, category, status, location, description, updated_at, permanent_owner_id, image_paths'
-    )
+    .select('id, asset_code, name, category, location, description, updated_at, permanent_owner_id, image_paths')
 
   const { data, error: fetchError } = assetCodeParam.value
     ? await query.eq('asset_code', assetCodeParam.value).single()
@@ -386,9 +371,7 @@ const updateOwner = async (ownerId: string) => {
     .from('assets')
     .update({ permanent_owner_id: trimmedOwner })
     .eq('id', asset.value.id)
-    .select(
-      'id, asset_code, name, category, status, location, description, updated_at, permanent_owner_id, image_paths'
-    )
+    .select('id, asset_code, name, category, location, description, updated_at, permanent_owner_id, image_paths')
     .single()
 
   if (ownerError) {
@@ -413,14 +396,11 @@ const saveAssetDetails = async () => {
     .update({
       name: trimmedName,
       category: editAsset.value.category.trim() || null,
-      status: editAsset.value.status,
       location: editAsset.value.location.trim() || null,
       description: editAsset.value.description?.trim() || null,
     })
     .eq('id', asset.value.id)
-    .select(
-      'id, asset_code, name, category, status, location, description, updated_at, permanent_owner_id, image_paths'
-    )
+    .select('id, asset_code, name, category, location, description, updated_at, permanent_owner_id, image_paths')
     .single()
 
   if (updateError) {
@@ -478,9 +458,7 @@ const handleImageUpload = async (event: Event) => {
       .from('assets')
       .update({ image_paths: nextPaths })
       .eq('id', asset.value.id)
-      .select(
-        'id, asset_code, name, category, status, location, description, updated_at, permanent_owner_id, image_paths'
-      )
+      .select('id, asset_code, name, category, location, description, updated_at, permanent_owner_id, image_paths')
       .single()
 
     if (updateError) {
@@ -566,9 +544,6 @@ onMounted(async () => {
               <p class="mt-1 text-xs text-slate-400">Last updated: {{ asset.updatedAt }}</p>
             </div>
             <div class="flex items-center gap-2">
-              <Badge variant="outline" :class="statusBadgeClass(asset.status)">
-                {{ asset.status }}
-              </Badge>
               <Button
                 v-if="!isEditing"
                 variant="outline"
@@ -583,19 +558,6 @@ onMounted(async () => {
             <div class="grid gap-2">
               <Label for="edit-name">Name</Label>
               <Input id="edit-name" v-model="editAsset.name" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="edit-status">Status</Label>
-              <Select v-model="editAsset.status">
-                <SelectTrigger id="edit-status">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Operational">Operational</SelectItem>
-                  <SelectItem value="Needs Service">Needs Service</SelectItem>
-                  <SelectItem value="Offline">Offline</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
             <div class="grid gap-2">
               <Label for="edit-category">Category</Label>
