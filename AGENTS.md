@@ -18,6 +18,13 @@ mnts-asset-management is a web app for asset management. The stack is Vue 3 + Ty
 - Keep Supabase access through a single client module (for example `apps/web/src/lib/supabase.ts`).
 - Do not commit secrets. Use `.env` locally and keep `.env.example` in repo.
 
+## Current Implementation Notes
+
+- Auth uses Supabase Google OAuth only; see `apps/web/src/pages/Auth.vue` and `apps/web/src/stores/session.ts`.
+- Core asset flows live in `apps/web/src/pages/Assets.vue`, `apps/web/src/pages/AssetCreate.vue`, `apps/web/src/pages/AssetDetail.vue`, and `apps/web/src/pages/AssetPrint.vue` (including QR code generation and QR scan filtering).
+- Supabase schema includes `assets`, `asset_loans`, `asset_owner_history`, and `profiles` plus the `asset-images` storage bucket with authenticated-only policies.
+- RLS policies currently allow all authenticated users to read/write assets, loans, and owner history.
+
 ## Local Development (expected)
 
 1) Install deps in `apps/web/`.

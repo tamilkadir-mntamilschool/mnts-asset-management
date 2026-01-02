@@ -50,6 +50,16 @@ type Profile = {
   email: string | null
 }
 
+type BarcodeDetectorResult = {
+  rawValue: string
+}
+
+type BarcodeDetectorInstance = {
+  detect: (source: ImageBitmapSource) => Promise<BarcodeDetectorResult[]>
+}
+
+type BarcodeDetectorConstructor = new (options: { formats: string[] }) => BarcodeDetectorInstance
+
 const fallbackAssets: Asset[] = [
   {
     id: 'A-1023',
@@ -136,7 +146,7 @@ const canScan = computed(() => typeof window !== 'undefined' && 'BarcodeDetector
 
 let scanStream: MediaStream | null = null
 let scanAnimationFrame: number | null = null
-let barcodeDetector: { detect: (source: ImageBitmapSource) => Promise<Array<{ rawValue: string }>> } | null = null
+let barcodeDetector: BarcodeDetectorInstance | null = null
 
 const mapAssetRecord = (
   record: AssetRecord,
@@ -204,23 +214,23 @@ const fetchAssets = async () => {
 
     const activeLoanLookup = new Map<string, ActiveLoanRecord>()
     if (loanData) {
-      ;(loanData as ActiveLoanRecord[]).forEach((loan) => {
+      for (const loan of loanData as ActiveLoanRecord[]) {
         activeLoanLookup.set(loan.asset_id, loan)
-      })
+      }
     }
 
     const profileIds = new Set<string>()
-    ;(assetData as AssetRecord[]).forEach((record) => {
+    for (const record of assetData as AssetRecord[]) {
       if (record.permanent_owner_id) {
         profileIds.add(record.permanent_owner_id)
       }
-    })
+    }
     if (loanData) {
-      ;(loanData as ActiveLoanRecord[]).forEach((loan) => {
+      for (const loan of loanData as ActiveLoanRecord[]) {
         if (loan.borrower_id) {
           profileIds.add(loan.borrower_id)
         }
-      })
+      }
     }
 
     if (profileIds.size > 0) {
@@ -258,9 +268,9 @@ const extractSearchTerm = (rawValue: string) => {
   try {
     const parsed = new URL(trimmed)
     const codeMatch = parsed.pathname.match(/\/assets\/code\/([^/]+)/)
-    if (codeMatch) return decodeURIComponent(codeMatch[1])
+    if (codeMatch?.[1]) return decodeURIComponent(codeMatch[1])
     const idMatch = parsed.pathname.match(/\/assets\/([^/]+)/)
-    if (idMatch) return decodeURIComponent(idMatch[1])
+    if (idMatch?.[1]) return decodeURIComponent(idMatch[1])
   } catch {
     // Not a URL, fall back to raw text.
   }
@@ -288,7 +298,10 @@ const scanLoop = async () => {
   try {
     const results = await barcodeDetector.detect(videoRef.value)
     if (results.length > 0) {
-      search.value = extractSearchTerm(results[0].rawValue)
+      const rawValue = results[0]?.rawValue
+      if (rawValue) {
+        search.value = extractSearchTerm(rawValue)
+      }
       isScanOpen.value = false
       return
     }
@@ -319,10 +332,13 @@ const startScanner = async () => {
       videoRef.value.srcObject = scanStream
       await videoRef.value.play()
     }
-    barcodeDetector = new (window as unknown as { BarcodeDetector: new (options: { formats: string[] }) => any })
-      .BarcodeDetector({
-        formats: ['qr_code'],
-      })
+    const Detector = (window as Window & { BarcodeDetector?: BarcodeDetectorConstructor }).BarcodeDetector
+    if (!Detector) {
+      scanError.value = 'QR scanning is not supported in this browser.'
+      stopScanner()
+      return
+    }
+    barcodeDetector = new Detector({ formats: ['qr_code'] })
     isScanning.value = true
     scanLoop()
   } catch (err) {
