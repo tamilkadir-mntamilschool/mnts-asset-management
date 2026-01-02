@@ -66,7 +66,16 @@ const error = ref<string | null>(null)
 const search = ref('')
 const statusFilter = ref<'all' | AssetStatus>('all')
 const isDialogOpen = ref(false)
+const isEditDialogOpen = ref(false)
 const newAsset = ref({
+  name: '',
+  category: '',
+  status: 'Operational' as AssetStatus,
+  location: '',
+  description: '',
+})
+const editAsset = ref({
+  id: '',
   name: '',
   category: '',
   status: 'Operational' as AssetStatus,
@@ -156,6 +165,29 @@ const resetForm = () => {
   }
 }
 
+const resetEditForm = () => {
+  editAsset.value = {
+    id: '',
+    name: '',
+    category: '',
+    status: 'Operational',
+    location: '',
+    description: '',
+  }
+}
+
+const startEdit = (asset: Asset) => {
+  editAsset.value = {
+    id: asset.id,
+    name: asset.name,
+    category: asset.category === 'Uncategorized' ? '' : asset.category,
+    status: asset.status,
+    location: asset.location === 'Unassigned' ? '' : asset.location,
+    description: asset.description ?? '',
+  }
+  isEditDialogOpen.value = true
+}
+
 const addAsset = async () => {
   const trimmedName = newAsset.value.name.trim()
   if (!trimmedName) return
@@ -199,6 +231,59 @@ const addAsset = async () => {
 
   resetForm()
   isDialogOpen.value = false
+}
+
+const updateAsset = async () => {
+  const trimmedName = editAsset.value.name.trim()
+  if (!trimmedName) return
+
+  if (isSupabaseConfigured) {
+    loading.value = true
+    error.value = null
+    const { data, error: updateError } = await supabase
+      .from('assets')
+      .update({
+        name: trimmedName,
+        category: editAsset.value.category || null,
+        status: editAsset.value.status,
+        location: editAsset.value.location || null,
+        description: editAsset.value.description?.trim() || null,
+      })
+      .eq('id', editAsset.value.id)
+      .select('id, name, category, status, location, description, updated_at')
+      .single()
+
+    if (updateError) {
+      error.value = updateError.message
+      loading.value = false
+      return
+    }
+
+    if (data) {
+      const updated = mapAssetRecord(data as AssetRecord)
+      const index = assets.value.findIndex((asset) => asset.id === updated.id)
+      if (index !== -1) {
+        assets.value.splice(index, 1, updated)
+      }
+    }
+    loading.value = false
+  } else {
+    const index = assets.value.findIndex((asset) => asset.id === editAsset.value.id)
+    if (index !== -1) {
+      assets.value.splice(index, 1, {
+        id: editAsset.value.id,
+        name: trimmedName,
+        category: editAsset.value.category || 'Uncategorized',
+        status: editAsset.value.status,
+        location: editAsset.value.location || 'Unassigned',
+        updatedAt: new Date().toISOString().slice(0, 10),
+        description: editAsset.value.description?.trim(),
+      })
+    }
+  }
+
+  resetEditForm()
+  isEditDialogOpen.value = false
 }
 
 onMounted(fetchAssets)
@@ -355,7 +440,7 @@ onMounted(fetchAssets)
           <DialogFooter class="gap-2 sm:justify-end">
             <Button
               variant="outline"
-              class="border-slate-700 text-slate-200 hover:bg-slate-800"
+              class="border-slate-600/80 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
               @click="isDialogOpen = false"
             >
               Cancel
@@ -402,6 +487,15 @@ onMounted(fetchAssets)
                     {{ asset.status }}
                   </Badge>
                 </div>
+                <div class="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    class="border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
+                    @click="startEdit(asset)"
+                  >
+                    Edit
+                  </Button>
+                </div>
                 <dl class="space-y-2 text-sm text-slate-200">
                   <div class="flex items-center justify-between">
                     <dt class="text-xs uppercase tracking-[0.18em] text-slate-400">Category</dt>
@@ -421,6 +515,14 @@ onMounted(fetchAssets)
                 <div class="space-y-1">
                   <p class="font-semibold text-white">{{ asset.name }}</p>
                   <p class="text-xs text-slate-300">{{ asset.id }}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="mt-2 border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
+                    @click="startEdit(asset)"
+                  >
+                    Edit
+                  </Button>
                 </div>
                 <div class="flex items-center">
                   <Badge variant="outline" :class="statusBadgeClass(asset.status)">
@@ -457,6 +559,59 @@ onMounted(fetchAssets)
             </div>
           </div>
         </div>
+      </Dialog>
+      <Dialog v-model:open="isEditDialogOpen">
+        <DialogContent class="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit asset</DialogTitle>
+            <DialogDescription>
+              Update the core details to keep inventory accurate.
+            </DialogDescription>
+          </DialogHeader>
+          <div class="grid gap-4 py-2">
+            <div class="grid gap-2">
+              <Label for="edit-asset-name">Asset name</Label>
+              <Input id="edit-asset-name" v-model="editAsset.name" placeholder="Forklift FL-12" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="edit-asset-category">Category</Label>
+              <Input id="edit-asset-category" v-model="editAsset.category" placeholder="Material Handling" />
+            </div>
+            <div class="grid gap-2">
+              <Label>Status</Label>
+              <Select v-model="editAsset.status">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Operational">Operational</SelectItem>
+                  <SelectItem value="Needs Service">Needs Service</SelectItem>
+                  <SelectItem value="Offline">Offline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="grid gap-2">
+              <Label for="edit-asset-location">Location</Label>
+              <Input id="edit-asset-location" v-model="editAsset.location" placeholder="Dock 2" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="edit-asset-notes">Notes</Label>
+              <Textarea id="edit-asset-notes" v-model="editAsset.description" placeholder="Add any quick notes" />
+            </div>
+          </div>
+          <DialogFooter class="gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              class="border-slate-600/80 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
+              @click="isEditDialogOpen = false"
+            >
+              Cancel
+            </Button>
+            <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" @click="updateAsset">
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   </SidebarLayout>
