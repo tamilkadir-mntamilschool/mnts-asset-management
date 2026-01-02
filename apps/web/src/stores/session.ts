@@ -160,6 +160,8 @@ export const useSessionStore = defineStore('session', {
         this.status = 'error'
         this.message = null
       } else {
+        this.session = null
+        this.user = null
         this.status = 'success'
         this.message = 'Signed out.'
       }
