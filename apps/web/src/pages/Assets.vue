@@ -85,6 +85,20 @@ const filteredAssets = computed(() => {
   })
 })
 
+const activeFilters = computed(() => {
+  const filters: { label: string; value: string }[] = []
+  const trimmedSearch = search.value.trim()
+  if (trimmedSearch) {
+    filters.push({ label: 'Search', value: trimmedSearch })
+  }
+  if (statusFilter.value !== 'all') {
+    filters.push({ label: 'Status', value: statusFilter.value })
+  }
+  return filters
+})
+
+const hasActiveFilters = computed(() => activeFilters.value.length > 0)
+
 const mapAssetRecord = (record: AssetRecord): Asset => {
   return {
     id: record.id,
@@ -121,10 +135,10 @@ const fetchAssets = async () => {
   loading.value = false
 }
 
-const statusBadgeVariant = (status: AssetStatus) => {
-  if (status === 'Operational') return 'secondary'
-  if (status === 'Needs Service') return 'outline'
-  return 'destructive'
+const statusBadgeClass = (status: AssetStatus) => {
+  if (status === 'Operational') return 'border-emerald-400/40 bg-emerald-400/15 text-emerald-100'
+  if (status === 'Needs Service') return 'border-amber-400/50 bg-amber-400/15 text-amber-100'
+  return 'border-rose-400/50 bg-rose-500/20 text-rose-100'
 }
 
 const clearFilters = () => {
@@ -192,137 +206,258 @@ onMounted(fetchAssets)
 
 <template>
   <SidebarLayout>
-    <div class="flex flex-col gap-6">
-      <div class="flex flex-col gap-4 rounded-3xl border border-slate-800 bg-slate-900/60 p-8">
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Assets</p>
-            <h1 class="mt-2 text-3xl font-semibold">Inventory command center</h1>
-            <p class="mt-2 text-sm text-slate-300">
-              Track critical equipment, status, and last activity in one view.
-            </p>
-          </div>
-          <Dialog v-model:open="isDialogOpen">
+    <div class="flex flex-col gap-6 pb-10">
+      <Dialog v-model:open="isDialogOpen">
+        <div class="flex flex-col gap-4 rounded-3xl border border-slate-800/80 bg-slate-900/60 p-8 shadow-lg shadow-slate-950/30">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Assets</p>
+              <h1 class="mt-2 text-3xl font-semibold text-white">Inventory command center</h1>
+              <p class="mt-2 text-sm text-slate-200">
+                Track critical equipment, status, and last activity in one view.
+              </p>
+            </div>
             <DialogTrigger as-child>
-              <Button class="bg-slate-100 text-slate-950 hover:bg-white">
+              <Button class="hidden bg-amber-300 text-slate-950 hover:bg-amber-200 sm:inline-flex">
                 New Asset
               </Button>
             </DialogTrigger>
-            <DialogContent class="sm:max-w-lg">
-              <DialogHeader>
-                <DialogTitle>Register an asset</DialogTitle>
-                <DialogDescription>
-                  Add the core details now. You can fill in maintenance and ownership later.
-                </DialogDescription>
-              </DialogHeader>
-              <div class="grid gap-4 py-2">
-                <div class="grid gap-2">
-                  <Label for="asset-name">Asset name</Label>
-                  <Input id="asset-name" v-model="newAsset.name" placeholder="Forklift FL-12" />
-                </div>
-                <div class="grid gap-2">
-                  <Label for="asset-category">Category</Label>
-                  <Input id="asset-category" v-model="newAsset.category" placeholder="Material Handling" />
-                </div>
-                <div class="grid gap-2">
-                  <Label>Status</Label>
-                  <Select v-model="newAsset.status">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Operational">Operational</SelectItem>
-                      <SelectItem value="Needs Service">Needs Service</SelectItem>
-                      <SelectItem value="Offline">Offline</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div class="grid gap-2">
-                  <Label for="asset-location">Location</Label>
-                  <Input id="asset-location" v-model="newAsset.location" placeholder="Dock 2" />
-                </div>
-                <div class="grid gap-2">
-                  <Label for="asset-notes">Notes</Label>
-                  <Textarea id="asset-notes" v-model="newAsset.description" placeholder="Add any quick notes" />
-                </div>
+          </div>
+
+          <div class="hidden flex-col gap-3 sm:flex lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-end">
+              <div class="flex-1 space-y-2">
+                <Label for="asset-search">Search</Label>
+                <Input
+                  id="asset-search"
+                  v-model="search"
+                  class="sm:max-w-xs"
+                  placeholder="Search by name, ID, or location"
+                />
               </div>
-              <DialogFooter class="gap-2 sm:justify-end">
-                <Button variant="outline" class="border-slate-700 text-slate-200 hover:bg-slate-800" @click="isDialogOpen = false">
-                  Cancel
-                </Button>
-                <Button class="bg-slate-100 text-slate-950 hover:bg-white" @click="addAsset">
-                  Save asset
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              <div class="space-y-2">
+                <Label for="asset-status">Status</Label>
+                <Select v-model="statusFilter">
+                  <SelectTrigger id="asset-status" class="sm:w-44">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="Operational">Operational</SelectItem>
+                    <SelectItem value="Needs Service">Needs Service</SelectItem>
+                    <SelectItem value="Offline">Offline</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                v-if="hasActiveFilters"
+                variant="ghost"
+                class="justify-start text-slate-200 hover:text-white"
+                @click="clearFilters"
+              >
+                Clear filters
+              </Button>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-slate-300">
+              <Badge v-if="!isSupabaseConfigured" variant="outline" class="border-slate-700/80 text-slate-200">
+                Local mode
+              </Badge>
+              <span v-if="loading">Syncing...</span>
+              <span v-else>{{ filteredAssets.length }} assets</span>
+            </div>
+          </div>
+
+          <p v-if="error" class="text-sm text-rose-300">
+            {{ error }}
+          </p>
         </div>
 
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
-            <Input v-model="search" class="sm:max-w-xs" placeholder="Search by name, ID, or location" />
-            <Select v-model="statusFilter">
-              <SelectTrigger class="sm:w-44">
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="Operational">Operational</SelectItem>
-                <SelectItem value="Needs Service">Needs Service</SelectItem>
-                <SelectItem value="Offline">Offline</SelectItem>
-              </SelectContent>
-            </Select>
+        <div class="sticky top-4 z-20 -mx-6 rounded-2xl border border-slate-800/80 bg-slate-950/85 px-6 py-4 shadow-lg shadow-slate-950/50 backdrop-blur sm:hidden">
+          <div class="grid gap-3">
+            <div class="grid gap-2">
+              <Label class="sr-only" for="asset-search-mobile">Search</Label>
+              <Input
+                id="asset-search-mobile"
+                v-model="search"
+                placeholder="Search assets"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex-1">
+                <Label class="sr-only" for="asset-status-mobile">Status</Label>
+                <Select v-model="statusFilter">
+                  <SelectTrigger id="asset-status-mobile">
+                    <SelectValue placeholder="All statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All statuses</SelectItem>
+                    <SelectItem value="Operational">Operational</SelectItem>
+                    <SelectItem value="Needs Service">Needs Service</SelectItem>
+                    <SelectItem value="Offline">Offline</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogTrigger as-child>
+                <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200">
+                  New
+                </Button>
+              </DialogTrigger>
+            </div>
             <Button
-              v-if="search || statusFilter !== 'all'"
+              v-if="hasActiveFilters"
               variant="ghost"
-              class="justify-start text-slate-300 hover:text-slate-100"
+              class="justify-start text-slate-200 hover:text-white"
               @click="clearFilters"
             >
               Clear filters
             </Button>
           </div>
-          <div class="flex items-center gap-2 text-xs text-slate-400">
-            <Badge v-if="!isSupabaseConfigured" variant="outline">Local mode</Badge>
-            <span v-if="loading">Syncing...</span>
-            <span v-else>{{ filteredAssets.length }} assets</span>
+        </div>
+
+        <DialogContent class="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Register an asset</DialogTitle>
+            <DialogDescription>
+              Add the core details now. You can fill in maintenance and ownership later.
+            </DialogDescription>
+          </DialogHeader>
+          <div class="grid gap-4 py-2">
+            <div class="grid gap-2">
+              <Label for="asset-name">Asset name</Label>
+              <Input id="asset-name" v-model="newAsset.name" placeholder="Forklift FL-12" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="asset-category">Category</Label>
+              <Input id="asset-category" v-model="newAsset.category" placeholder="Material Handling" />
+            </div>
+            <div class="grid gap-2">
+              <Label>Status</Label>
+              <Select v-model="newAsset.status">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Operational">Operational</SelectItem>
+                  <SelectItem value="Needs Service">Needs Service</SelectItem>
+                  <SelectItem value="Offline">Offline</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="grid gap-2">
+              <Label for="asset-location">Location</Label>
+              <Input id="asset-location" v-model="newAsset.location" placeholder="Dock 2" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="asset-notes">Notes</Label>
+              <Textarea id="asset-notes" v-model="newAsset.description" placeholder="Add any quick notes" />
+            </div>
           </div>
-        </div>
-
-        <p v-if="error" class="text-sm text-rose-300">
-          {{ error }}
-        </p>
-      </div>
-
-      <div class="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60">
-        <div class="grid grid-cols-1 gap-4 px-6 py-4 text-xs uppercase tracking-[0.2em] text-slate-400 sm:grid-cols-5">
-          <span>Asset</span>
-          <span>Status</span>
-          <span>Category</span>
-          <span>Location</span>
-          <span>Updated</span>
-        </div>
-        <div class="divide-y divide-slate-800/80">
-          <div
-            v-for="asset in filteredAssets"
-            :key="asset.id"
-            class="grid grid-cols-1 gap-4 px-6 py-4 text-sm text-slate-200 sm:grid-cols-5"
+          <DialogFooter class="gap-2 sm:justify-end">
+            <Button
+              variant="outline"
+              class="border-slate-700 text-slate-200 hover:bg-slate-800"
+              @click="isDialogOpen = false"
+            >
+              Cancel
+            </Button>
+            <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" @click="addAsset">
+              Save asset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+        <div
+          v-if="hasActiveFilters"
+          class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 px-4 py-3 text-xs text-slate-200"
+        >
+          <Badge
+            v-for="filter in activeFilters"
+            :key="filter.label"
+            variant="outline"
+            class="border-slate-700/80 text-slate-200"
           >
-            <div class="space-y-1">
-              <p class="font-semibold">{{ asset.name }}</p>
-              <p class="text-xs text-slate-400">{{ asset.id }}</p>
-            </div>
-            <div class="flex items-center">
-              <Badge :variant="statusBadgeVariant(asset.status)">{{ asset.status }}</Badge>
-            </div>
-            <div class="text-slate-300">{{ asset.category }}</div>
-            <div class="text-slate-300">{{ asset.location }}</div>
-            <div class="text-slate-400">{{ asset.updatedAt }}</div>
+            {{ filter.label }}: {{ filter.value }}
+          </Badge>
+          <Button variant="ghost" class="text-slate-200 hover:text-white" @click="clearFilters">
+            Clear all
+          </Button>
+        </div>
+
+        <div class="overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/60">
+          <div class="hidden grid-cols-5 gap-4 px-6 py-4 text-xs uppercase tracking-[0.2em] text-slate-300 sm:grid">
+            <span>Asset</span>
+            <span>Status</span>
+            <span>Category</span>
+            <span>Location</span>
+            <span>Updated</span>
           </div>
-          <div v-if="filteredAssets.length === 0" class="px-6 py-10 text-center text-sm text-slate-400">
-            No assets match these filters yet.
+          <div class="divide-y divide-slate-800/80">
+            <div v-for="asset in filteredAssets" :key="asset.id" class="px-6 py-4 text-sm text-slate-100">
+              <div class="space-y-3 sm:hidden">
+                <div class="flex items-start justify-between gap-4">
+                  <div>
+                    <p class="text-base font-semibold text-white">{{ asset.name }}</p>
+                    <p class="text-xs text-slate-300">{{ asset.id }}</p>
+                  </div>
+                  <Badge variant="outline" :class="statusBadgeClass(asset.status)">
+                    {{ asset.status }}
+                  </Badge>
+                </div>
+                <dl class="space-y-2 text-sm text-slate-200">
+                  <div class="flex items-center justify-between">
+                    <dt class="text-xs uppercase tracking-[0.18em] text-slate-400">Category</dt>
+                    <dd>{{ asset.category }}</dd>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <dt class="text-xs uppercase tracking-[0.18em] text-slate-400">Location</dt>
+                    <dd>{{ asset.location }}</dd>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <dt class="text-xs uppercase tracking-[0.18em] text-slate-400">Updated</dt>
+                    <dd>{{ asset.updatedAt }}</dd>
+                  </div>
+                </dl>
+              </div>
+              <div class="hidden grid-cols-5 gap-4 text-sm text-slate-200 sm:grid">
+                <div class="space-y-1">
+                  <p class="font-semibold text-white">{{ asset.name }}</p>
+                  <p class="text-xs text-slate-300">{{ asset.id }}</p>
+                </div>
+                <div class="flex items-center">
+                  <Badge variant="outline" :class="statusBadgeClass(asset.status)">
+                    {{ asset.status }}
+                  </Badge>
+                </div>
+                <div class="text-slate-200">{{ asset.category }}</div>
+                <div class="text-slate-200">{{ asset.location }}</div>
+                <div class="text-slate-300">{{ asset.updatedAt }}</div>
+              </div>
+            </div>
+            <div v-if="filteredAssets.length === 0" class="px-6 py-12 text-center text-sm text-slate-300">
+              <div v-if="assets.length === 0" class="space-y-3">
+                <p class="text-base font-semibold text-white">No assets yet.</p>
+                <p class="text-sm text-slate-300">Create the first asset to start tracking inventory.</p>
+                <DialogTrigger as-child>
+                  <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200">
+                    Create your first asset
+                  </Button>
+                </DialogTrigger>
+              </div>
+              <div v-else class="space-y-3">
+                <p class="text-base font-semibold text-white">No assets match these filters.</p>
+                <p class="text-sm text-slate-300">Try adjusting your filters to see results.</p>
+                <Button
+                  v-if="hasActiveFilters"
+                  variant="outline"
+                  class="border-slate-700 text-slate-200 hover:bg-slate-800"
+                  @click="clearFilters"
+                >
+                  Clear filters
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </Dialog>
     </div>
   </SidebarLayout>
 </template>

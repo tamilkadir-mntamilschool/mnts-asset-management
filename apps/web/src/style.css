@@ -8,6 +8,14 @@ body {
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
 }
 
+.app-background {
+  background-color: #0f141b;
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%, rgba(96, 120, 124, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, rgba(180, 140, 80, 0.12), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

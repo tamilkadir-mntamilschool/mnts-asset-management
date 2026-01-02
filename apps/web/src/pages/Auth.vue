@@ -3,6 +3,7 @@ import { computed, ref, watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useSessionStore } from '@/stores/session'
 
 const sessionStore = useSessionStore()
@@ -54,15 +55,15 @@ const handleUpdatePassword = async () => {
 
 <template>
   <section class="mx-auto w-full max-w-md px-6 py-16">
-    <div class="rounded-3xl border border-slate-800 bg-slate-900/60 p-8">
-      <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Access</p>
+    <div class="rounded-3xl border border-slate-800/80 bg-slate-900/60 p-8 shadow-xl shadow-slate-950/40">
+      <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Access</p>
       <h1 class="mt-3 text-3xl font-semibold">
         <span v-if="mode === 'signIn'">Sign in to MNTS</span>
         <span v-else-if="mode === 'signUp'">Create your account</span>
         <span v-else-if="mode === 'reset'">Reset your password</span>
         <span v-else>Set a new password</span>
       </h1>
-      <p class="mt-2 text-sm text-slate-300">
+      <p class="mt-2 text-sm text-slate-200">
         <span v-if="mode === 'signIn'">
           Use your email and password. New teams can create an account.
         </span>
@@ -92,7 +93,7 @@ const handleUpdatePassword = async () => {
           <Button
             type="button"
             variant="outline"
-            class="border-slate-700 text-slate-200 hover:bg-slate-800"
+            class="border-slate-700 text-slate-100 hover:bg-slate-800/70"
             :disabled="sessionStore.loading"
             @click="handleGoogleSignIn"
           >
@@ -128,24 +129,23 @@ const handleUpdatePassword = async () => {
             <div class="h-px flex-1 bg-slate-800"></div>
           </div>
         </div>
-        <Input v-if="mode !== 'updatePassword'" v-model="email" type="email" placeholder="you@company.com" />
-        <Input
-          v-if="mode === 'signIn' || mode === 'signUp'"
-          v-model="password"
-          type="password"
-          placeholder="Password"
-        />
-        <Input
-          v-if="mode === 'updatePassword'"
-          v-model="newPassword"
-          type="password"
-          placeholder="New password"
-        />
+        <div v-if="mode !== 'updatePassword'" class="grid gap-2">
+          <Label for="auth-email">Email</Label>
+          <Input id="auth-email" v-model="email" type="email" placeholder="you@company.com" />
+        </div>
+        <div v-if="mode === 'signIn' || mode === 'signUp'" class="grid gap-2">
+          <Label for="auth-password">Password</Label>
+          <Input id="auth-password" v-model="password" type="password" placeholder="Enter your password" />
+        </div>
+        <div v-if="mode === 'updatePassword'" class="grid gap-2">
+          <Label for="auth-new-password">New password</Label>
+          <Input id="auth-new-password" v-model="newPassword" type="password" placeholder="Create a new password" />
+        </div>
 
         <div v-if="mode === 'signIn'" class="flex flex-col gap-3">
           <Button
             type="button"
-            class="bg-slate-100 text-slate-950 hover:bg-white"
+            class="bg-amber-300 text-slate-950 hover:bg-amber-200"
             :disabled="sessionStore.loading"
             @click="handleSignIn"
           >
@@ -154,14 +154,14 @@ const handleUpdatePassword = async () => {
           <Button
             type="button"
             variant="outline"
-            class="border-slate-700 text-slate-200 hover:bg-slate-800"
+            class="border-slate-700 text-slate-100 hover:bg-slate-800/70"
             :disabled="sessionStore.loading"
             @click="mode = 'signUp'"
           >
             Create account
           </Button>
           <button
-            class="text-xs text-slate-400 transition hover:text-slate-200"
+            class="text-xs text-slate-300 transition hover:text-white"
             type="button"
             @click="mode = 'reset'"
           >
@@ -172,7 +172,7 @@ const handleUpdatePassword = async () => {
         <div v-else-if="mode === 'signUp'" class="flex flex-col gap-3">
           <Button
             type="button"
-            class="bg-slate-100 text-slate-950 hover:bg-white"
+            class="bg-amber-300 text-slate-950 hover:bg-amber-200"
             :disabled="sessionStore.loading"
             @click="handleSignUp"
           >
@@ -181,7 +181,7 @@ const handleUpdatePassword = async () => {
           <Button
             type="button"
             variant="outline"
-            class="border-slate-700 text-slate-200 hover:bg-slate-800"
+            class="border-slate-700 text-slate-100 hover:bg-slate-800/70"
             :disabled="sessionStore.loading"
             @click="mode = 'signIn'"
           >
@@ -192,7 +192,7 @@ const handleUpdatePassword = async () => {
         <div v-else-if="mode === 'reset'" class="flex flex-col gap-3">
           <Button
             type="button"
-            class="bg-slate-100 text-slate-950 hover:bg-white"
+            class="bg-amber-300 text-slate-950 hover:bg-amber-200"
             :disabled="sessionStore.loading"
             @click="handleReset"
           >
@@ -201,7 +201,7 @@ const handleUpdatePassword = async () => {
           <Button
             type="button"
             variant="outline"
-            class="border-slate-700 text-slate-200 hover:bg-slate-800"
+            class="border-slate-700 text-slate-100 hover:bg-slate-800/70"
             :disabled="sessionStore.loading"
             @click="mode = 'signIn'"
           >
@@ -212,7 +212,7 @@ const handleUpdatePassword = async () => {
         <div v-else class="flex flex-col gap-3">
           <Button
             type="button"
-            class="bg-slate-100 text-slate-950 hover:bg-white"
+            class="bg-amber-300 text-slate-950 hover:bg-amber-200"
             :disabled="sessionStore.loading"
             @click="handleUpdatePassword"
           >
@@ -221,7 +221,7 @@ const handleUpdatePassword = async () => {
           <Button
             type="button"
             variant="outline"
-            class="border-slate-700 text-slate-200 hover:bg-slate-800"
+            class="border-slate-700 text-slate-100 hover:bg-slate-800/70"
             :disabled="sessionStore.loading"
             @click="mode = 'signIn'"
           >
