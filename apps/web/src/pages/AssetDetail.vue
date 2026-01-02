@@ -627,7 +627,7 @@ onMounted(async () => {
         <div class="order-3 rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <p class="text-sm text-slate-300">Loan status</p>
+              <p class="text-sm text-slate-300">Availability</p>
               <p class="text-lg font-semibold text-white">
                 {{ activeLoan ? 'Checked out' : 'Available' }}
               </p>
@@ -639,12 +639,12 @@ onMounted(async () => {
               variant="outline"
               :class="activeLoan ? 'border-amber-400/40 bg-amber-400/15 text-amber-100' : 'border-emerald-400/40 bg-emerald-400/15 text-emerald-100'"
             >
-              {{ activeLoan ? 'Out' : 'In' }}
+              {{ activeLoan ? 'Checked out' : 'Available' }}
             </Badge>
           </div>
           <div class="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
             <div class="grid gap-2">
-              <Label for="borrower-select">Loan to</Label>
+              <Label for="borrower-select">Check out to</Label>
               <Select v-model="borrowerSelection" :disabled="Boolean(activeLoan)">
                 <SelectTrigger id="borrower-select">
                   <SelectValue placeholder="Select a borrower" />
@@ -686,7 +686,7 @@ onMounted(async () => {
             </Button>
           </div>
           <div class="mt-3 grid gap-2">
-            <Label for="loan-notes">Checkout notes (optional)</Label>
+            <Label for="loan-notes">Checkout notes</Label>
             <Textarea
               id="loan-notes"
               v-model="checkoutNotes"
@@ -718,7 +718,7 @@ onMounted(async () => {
           <div class="flex flex-col gap-3">
             <div class="flex items-start justify-between">
               <div>
-                <p class="text-sm text-slate-300">Permanent owner</p>
+                <p class="text-sm text-slate-300">Primary owner</p>
                 <p class="text-base font-semibold text-white">{{ profileName(asset.permanentOwnerId) }}</p>
               </div>
               <Button
@@ -761,7 +761,7 @@ onMounted(async () => {
               </Button>
             </div>
             <div class="mt-2 text-xs text-slate-400">
-              Owner history updates automatically whenever the permanent owner changes.
+              Owner history updates automatically when the owner changes.
             </div>
             <div v-if="ownerHistory.length" class="mt-4 space-y-2 text-sm text-slate-200">
               <p class="text-xs uppercase tracking-[0.18em] text-slate-400">Owner history</p>
@@ -781,14 +781,14 @@ onMounted(async () => {
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p class="text-sm text-slate-300">QR code</p>
-              <p class="text-xs text-slate-400">Scan to open this asset (login required).</p>
+              <p class="text-xs text-slate-400">Scan to open this asset in MNTS Asset Management (login required).</p>
             </div>
             <Button
               v-if="asset"
               as-child
               class="bg-amber-300 text-slate-950 hover:bg-amber-200"
             >
-              <RouterLink :to="`/assets/${asset.id}/print`">Print QR</RouterLink>
+              <RouterLink :to="`/assets/${asset.id}/print`">Print QR code</RouterLink>
             </Button>
           </div>
           <div class="mt-4 flex items-center justify-center rounded-2xl border border-slate-800/80 bg-slate-950/60 p-6">

@@ -374,7 +374,7 @@ onBeforeUnmount(() => {
       <div class="flex flex-wrap items-center justify-between gap-4 print-hide">
         <div>
           <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Create asset</p>
-          <h1 class="mt-2 text-3xl font-semibold text-white">Register a new asset</h1>
+          <h1 class="mt-2 text-3xl font-semibold text-white">Add a new asset</h1>
           <p class="mt-2 text-sm text-slate-200">
             Add core details, assign an owner, and generate a QR code right away.
           </p>
@@ -516,7 +516,7 @@ onBeforeUnmount(() => {
                 :disabled="loading || !form.name.trim() || !isSupabaseConfigured"
                 @click="createAsset"
               >
-                {{ asset ? 'Save another asset' : 'Create asset' }}
+                {{ asset ? 'Add another asset' : 'Add asset' }}
               </Button>
             </div>
           </div>
@@ -526,7 +526,7 @@ onBeforeUnmount(() => {
           <div class="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-6 print-hide">
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm text-slate-300">Permanent owner</p>
+                <p class="text-sm text-slate-300">Primary owner</p>
                 <p class="text-xs text-slate-400">Assign the primary owner for this asset.</p>
               </div>
               <Button
@@ -534,7 +534,7 @@ onBeforeUnmount(() => {
                 class="border-slate-700/80 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
                 @click="setOwnerToMe"
               >
-                Assign to me
+                Make me owner
               </Button>
             </div>
             <div class="mt-4 grid gap-2 text-sm text-slate-200">
@@ -588,7 +588,7 @@ onBeforeUnmount(() => {
                   </button>
                 </div>
               </div>
-              <div v-else class="text-xs text-slate-400">No images selected yet.</div>
+              <div v-else class="text-xs text-slate-400">No photos added yet.</div>
               <p v-if="uploadError" class="text-xs text-rose-300">
                 {{ uploadError }}
               </p>
@@ -622,7 +622,7 @@ onBeforeUnmount(() => {
               <RouterLink :to="`/assets/${asset.id}`">View asset</RouterLink>
             </Button>
             <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" @click="printQr">
-              Print QR
+              Print QR code
             </Button>
           </div>
         </div>

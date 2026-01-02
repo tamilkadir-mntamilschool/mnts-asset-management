@@ -7,13 +7,13 @@ import { Input } from '@/components/ui/input'
   <section>
     <div class="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-12">
       <header class="space-y-3">
-        <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Asset Ops</p>
+        <p class="text-xs uppercase tracking-[0.25em] text-slate-400">MNTS Asset Management</p>
         <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl">
-          Maintain every asset, every stage.
+          Every asset, fully tracked.
         </h1>
         <p class="max-w-2xl text-base text-slate-300 sm:text-lg">
-          Track inventory, condition, and workflows in one place. Supabase-backed
-          and Vercel-deployed.
+          Track inventory, condition, and workflows in one place with real-time status
+          and clean audit trails.
         </p>
       </header>
 

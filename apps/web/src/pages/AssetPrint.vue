@@ -84,9 +84,9 @@ onMounted(async () => {
     <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 print-text">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Print QR</p>
+          <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Print QR code</p>
           <h1 class="mt-2 text-3xl font-semibold text-white">{{ asset?.name ?? 'Asset' }}</h1>
-          <p class="mt-2 text-sm text-slate-300">MNTS asset barcode for quick scanning.</p>
+          <p class="mt-2 text-sm text-slate-300">MNTS Asset Management QR code for quick scanning.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
           <Button

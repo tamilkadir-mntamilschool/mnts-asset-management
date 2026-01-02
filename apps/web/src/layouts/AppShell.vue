@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -9,9 +9,9 @@ import { useSessionStore } from '@/stores/session'
 
 const sessionStore = useSessionStore()
 const router = useRouter()
+const route = useRoute()
 const isSettingsOpen = ref(false)
 const isMenuOpen = ref(false)
-const isMobileNavOpen = ref(false)
 const settingsName = ref('')
 const menuRef = ref<HTMLElement | null>(null)
 
@@ -21,6 +21,7 @@ const fallbackName = computed(() => {
 })
 
 const displayName = computed(() => fallbackName.value)
+const isAuthRoute = computed(() => route.name === 'auth' || route.path === '/' || route.path === '/auth')
 
 const initials = computed(() => {
   const name = displayName.value.trim()
@@ -61,7 +62,6 @@ const handleDocumentClick = (event: MouseEvent) => {
 const handleDocumentKey = (event: KeyboardEvent) => {
   if (event.key === 'Escape') {
     isMenuOpen.value = false
-    isMobileNavOpen.value = false
   }
 }
 
@@ -85,32 +85,16 @@ watch(isSettingsOpen, (isOpen) => {
 <template>
   <Dialog v-model:open="isSettingsOpen">
     <div class="app-background min-h-screen text-slate-100">
-      <header class="border-b border-slate-800/70 bg-slate-950/70 backdrop-blur">
+      <header v-if="!isAuthRoute" class="border-b border-slate-800/70 bg-slate-950/70 backdrop-blur">
         <div class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
           <div class="flex items-center gap-3">
-            <button
-              class="rounded-xl border border-slate-800/80 bg-slate-900/80 p-2 text-slate-200 transition hover:bg-slate-800 md:hidden"
-              type="button"
-              aria-label="Open menu"
-              @click="isMobileNavOpen = true"
-            >
-              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-              </svg>
-            </button>
-            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-300 text-slate-950">
-              M
-            </span>
-            <div>
-              <p class="text-sm font-semibold tracking-wide">MNTS</p>
-              <p class="text-xs text-slate-300">Asset Command</p>
-            </div>
-          </div>
-          <nav class="hidden items-center gap-6 text-sm text-slate-200 md:flex">
-            <RouterLink class="transition hover:text-white" active-class="text-white" to="/assets">
-              Assets
+            <RouterLink to="/assets" class="flex items-center gap-3 transition hover:text-white">
+              <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white">
+                <img src="@/assets/mnts-logo.png" alt="MNTS logo" class="h-9 w-9 object-contain" />
+              </span>
+              <span class="text-sm font-semibold tracking-wide">MNTS Asset Management</span>
             </RouterLink>
-          </nav>
+          </div>
           <div class="flex items-center gap-3">
             <span v-if="sessionStore.loading" class="hidden text-xs text-slate-400 sm:inline">
               Syncing...
@@ -144,7 +128,7 @@ watch(isSettingsOpen, (isOpen) => {
                     type="button"
                     @click="isMenuOpen = false"
                   >
-                    Settings
+                    Profile settings
                   </button>
                 </DialogTrigger>
                 <button
@@ -162,72 +146,11 @@ watch(isSettingsOpen, (isOpen) => {
       <main class="pb-0">
         <slot />
       </main>
-      <div
-        v-if="isMobileNavOpen"
-        class="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm md:hidden"
-        @click="isMobileNavOpen = false"
-      ></div>
-      <aside
-        class="fixed bottom-0 left-0 top-0 z-50 w-72 -translate-x-full border-r border-slate-800/80 bg-slate-950/95 px-6 py-6 text-slate-100 transition-transform md:hidden"
-        :class="isMobileNavOpen ? 'translate-x-0' : '-translate-x-full'"
-        aria-label="Mobile navigation"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-300 text-slate-950">
-              M
-            </span>
-            <div>
-              <p class="text-sm font-semibold tracking-wide">MNTS</p>
-              <p class="text-xs text-slate-300">Asset Command</p>
-            </div>
-          </div>
-          <button
-            class="rounded-xl border border-slate-800/80 bg-slate-900/80 p-2 text-slate-200 transition hover:bg-slate-800"
-            type="button"
-            aria-label="Close menu"
-            @click="isMobileNavOpen = false"
-          >
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-            </svg>
-          </button>
-        </div>
-        <nav class="mt-8 flex flex-col gap-2 text-sm text-slate-200">
-          <RouterLink
-            class="rounded-lg px-3 py-2 transition hover:bg-slate-800/70 hover:text-white"
-            active-class="bg-slate-800/70 text-white"
-            to="/assets"
-            @click="isMobileNavOpen = false"
-          >
-            Assets
-          </RouterLink>
-        </nav>
-        <div class="mt-8 border-t border-slate-800/80 pt-4">
-          <DialogTrigger v-if="sessionStore.user" as-child>
-            <button
-              class="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-slate-800/70 hover:text-white"
-              type="button"
-              @click="isMobileNavOpen = false"
-            >
-              Profile settings
-            </button>
-          </DialogTrigger>
-          <RouterLink
-            v-else
-            class="block rounded-lg px-3 py-2 text-left text-sm text-slate-200 transition hover:bg-slate-800/70 hover:text-white"
-            to="/auth"
-            @click="isMobileNavOpen = false"
-          >
-            Sign in
-          </RouterLink>
-        </div>
-      </aside>
     </div>
 
-    <DialogContent class="sm:max-w-lg">
+    <DialogContent class="border-slate-800/80 bg-slate-950/95 text-slate-100 shadow-xl shadow-slate-950/50 sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle>Account settings</DialogTitle>
+        <DialogTitle>Profile settings</DialogTitle>
         <DialogDescription>
           Update the display name shown in the header.
         </DialogDescription>
@@ -237,22 +160,11 @@ watch(isSettingsOpen, (isOpen) => {
           <Label for="settings-name">Name</Label>
           <Input id="settings-name" v-model="settingsName" placeholder="Your name" />
         </div>
-        <div class="rounded-xl border border-slate-800/80 bg-slate-950/70 p-4">
-          <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Preview</p>
-          <div class="mt-2 flex items-center gap-3">
-            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold">
-              {{ initials }}
-            </div>
-            <div>
-              <p class="text-sm font-semibold text-white">{{ settingsName || displayName }}</p>
-            </div>
-          </div>
-        </div>
       </div>
       <DialogFooter class="gap-2 sm:justify-end">
         <Button
           variant="outline"
-          class="border-slate-700 text-slate-200 hover:bg-slate-800"
+          class="border-slate-700/80 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
           @click="isSettingsOpen = false"
         >
           Cancel

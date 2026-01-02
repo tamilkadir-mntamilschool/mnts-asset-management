@@ -357,7 +357,7 @@ onBeforeUnmount(() => {
       <Dialog v-model:open="isScanOpen">
         <DialogContent class="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Scan asset QR</DialogTitle>
+            <DialogTitle>Scan asset QR code</DialogTitle>
             <DialogDescription>
               Point your camera at an asset QR code to filter the list.
             </DialogDescription>
@@ -372,7 +372,7 @@ onBeforeUnmount(() => {
             <p v-else-if="scanError" class="text-xs text-rose-300">
               {{ scanError }}
             </p>
-            <p v-else class="text-xs text-slate-400">Looking for a QR code...</p>
+            <p v-else class="text-xs text-slate-400">Point at a QR code to scan.</p>
           </div>
           <DialogFooter>
             <Button
@@ -390,10 +390,7 @@ onBeforeUnmount(() => {
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p class="text-xs uppercase tracking-[0.2em] text-slate-300">Assets</p>
-              <h1 class="mt-2 text-3xl font-semibold text-white">Inventory command center</h1>
-              <p class="mt-2 text-sm text-slate-200">
-                Track critical equipment, ownership, and last activity in one view.
-              </p>
+              <h1 class="mt-2 text-3xl font-semibold text-white">Dashboard</h1>
             </div>
             <div class="hidden items-center gap-2 sm:flex">
               <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" as-child>
@@ -467,7 +464,7 @@ onBeforeUnmount(() => {
           </div>
           <div class="flex flex-wrap items-center justify-end gap-3 text-xs text-slate-300">
             <Badge v-if="!isSupabaseConfigured" variant="outline" class="border-slate-700/80 text-slate-200">
-              Local mode
+              Local demo mode
             </Badge>
             <span v-if="loading">Syncing...</span>
             <span v-else>{{ filteredAssets.length }} assets</span>
@@ -478,7 +475,7 @@ onBeforeUnmount(() => {
               class="border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
               @click="clearFilters"
             >
-              Clear filters
+              Reset filters
             </Button>
           </div>
 
@@ -503,10 +500,10 @@ onBeforeUnmount(() => {
                 class="border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
                 @click="isScanOpen = true"
               >
-                Scan
+                Scan QR Code
               </Button>
               <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" as-child>
-                <RouterLink to="/assets/new">New</RouterLink>
+                <RouterLink to="/assets/new">New Asset</RouterLink>
               </Button>
             </div>
             <div v-if="hasUser" class="flex flex-wrap gap-2">
@@ -551,7 +548,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="mt-3 flex flex-wrap items-center justify-end gap-3 text-xs text-slate-300 sm:hidden">
           <Badge v-if="!isSupabaseConfigured" variant="outline" class="border-slate-700/80 text-slate-200">
-            Local mode
+            Local demo mode
           </Badge>
           <span v-if="loading">Syncing...</span>
           <span v-else>{{ filteredAssets.length }} assets</span>
@@ -562,12 +559,12 @@ onBeforeUnmount(() => {
             class="border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
             @click="clearFilters"
           >
-            Clear filters
+            Reset filters
           </Button>
         </div>
 
-        <div class="overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/60">
-          <div class="hidden grid-cols-7 gap-4 px-6 py-4 text-xs uppercase tracking-[0.2em] text-slate-300 sm:grid">
+        <div class="mt-6 overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/60">
+          <div class="hidden grid-cols-8 gap-4 px-6 py-4 text-xs uppercase tracking-[0.2em] text-slate-300 sm:grid">
             <span>Asset</span>
             <span>Owner</span>
             <span>Loan Status</span>
@@ -575,6 +572,7 @@ onBeforeUnmount(() => {
             <span>Category</span>
             <span>Location</span>
             <span>Updated</span>
+            <span class="text-right">&nbsp;</span>
           </div>
           <div class="divide-y divide-slate-800/80">
             <div v-for="asset in filteredAssets" :key="asset.id" class="px-6 py-4 text-sm text-slate-100">
@@ -587,16 +585,6 @@ onBeforeUnmount(() => {
                   <Badge variant="outline" :class="loanBadgeClass(asset.loanStatus)">
                     {{ asset.loanStatus }}
                   </Badge>
-                </div>
-                <div class="flex items-center gap-2">
-                  <Button
-                    as-child
-                    variant="outline"
-                    class="border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
-                    v-if="isSupabaseConfigured"
-                  >
-                    <RouterLink :to="`/assets/${asset.id}`">View</RouterLink>
-                  </Button>
                 </div>
                 <dl class="space-y-2 text-sm text-slate-200">
                   <div class="flex items-center justify-between">
@@ -628,22 +616,28 @@ onBeforeUnmount(() => {
                     <dd>{{ asset.updatedAt }}</dd>
                   </div>
                 </dl>
+                <div class="flex justify-end">
+                  <Button
+                    v-if="isSupabaseConfigured"
+                    as-child
+                    variant="outline"
+                    class="border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
+                  >
+                    <RouterLink :to="`/assets/${asset.id}`">View</RouterLink>
+                  </Button>
+                </div>
               </div>
-              <div class="hidden grid-cols-7 gap-4 text-sm text-slate-200 sm:grid">
+              <div class="hidden grid-cols-8 gap-4 text-sm text-slate-200 sm:grid">
                 <div class="space-y-1">
-                  <p class="font-semibold text-white">{{ asset.name }}</p>
+                  <RouterLink
+                    v-if="isSupabaseConfigured"
+                    :to="`/assets/${asset.id}`"
+                    class="font-semibold text-white transition hover:text-amber-200"
+                  >
+                    {{ asset.name }}
+                  </RouterLink>
+                  <p v-else class="font-semibold text-white">{{ asset.name }}</p>
                   <p class="text-xs text-slate-300">{{ asset.assetCode }}</p>
-                  <div class="mt-2 flex flex-wrap gap-2">
-                    <Button
-                      as-child
-                      variant="outline"
-                      size="sm"
-                      class="border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
-                      v-if="isSupabaseConfigured"
-                    >
-                      <RouterLink :to="`/assets/${asset.id}`">View</RouterLink>
-                    </Button>
-                  </div>
                 </div>
                 <div class="text-slate-200">{{ profileName(asset.permanentOwnerId) }}</div>
                 <div class="flex items-center">
@@ -655,14 +649,25 @@ onBeforeUnmount(() => {
                 <div class="text-slate-200">{{ asset.category }}</div>
                 <div class="text-slate-200">{{ asset.location }}</div>
                 <div class="text-slate-300">{{ asset.updatedAt }}</div>
+                <div class="flex justify-end">
+                  <Button
+                    v-if="isSupabaseConfigured"
+                    as-child
+                    variant="outline"
+                    size="sm"
+                    class="border-slate-700/80 bg-slate-900/60 text-slate-100 hover:bg-slate-800/80 hover:text-white"
+                  >
+                    <RouterLink :to="`/assets/${asset.id}`">View</RouterLink>
+                  </Button>
+                </div>
               </div>
             </div>
             <div v-if="filteredAssets.length === 0" class="px-6 py-12 text-center text-sm text-slate-300">
               <div v-if="assets.length === 0" class="space-y-3">
-                <p class="text-base font-semibold text-white">No assets yet.</p>
-                <p class="text-sm text-slate-300">Create the first asset to start tracking inventory.</p>
+                <p class="text-base font-semibold text-white">Your inventory is empty.</p>
+                <p class="text-sm text-slate-300">Add your first asset to start tracking inventory.</p>
                 <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" as-child>
-                  <RouterLink to="/assets/new">Create your first asset</RouterLink>
+                  <RouterLink to="/assets/new">Add your first asset</RouterLink>
                 </Button>
               </div>
               <div v-else class="space-y-3">
@@ -674,7 +679,7 @@ onBeforeUnmount(() => {
                   class="border-slate-700 text-slate-200 hover:bg-slate-800"
                   @click="clearFilters"
                 >
-                  Clear filters
+                  Reset filters
                 </Button>
               </div>
             </div>

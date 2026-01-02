@@ -5,6 +5,22 @@ import { supabase } from '@/lib/supabase'
 type AuthError = string | null
 type AuthStatus = 'idle' | 'loading' | 'success' | 'error' | 'pending_confirmation'
 
+const formatAuthError = (message: string) => {
+  const normalized = message.toLowerCase()
+  if (
+    normalized.includes('signup') ||
+    normalized.includes('sign up') ||
+    normalized.includes('signups not allowed') ||
+    normalized.includes('disabled') ||
+    normalized.includes('not authorized') ||
+    normalized.includes('unauthorized') ||
+    normalized.includes('not permitted')
+  ) {
+    return 'Access denied. This Google account is not authorized.'
+  }
+  return message
+}
+
 let initPromise: Promise<void> | null = null
 let authListenerAttached = false
 
@@ -58,7 +74,7 @@ export const useSessionStore = defineStore('session', {
               this.lastEvent = event
               if (event === 'SIGNED_IN') {
                 this.status = 'success'
-                this.message = 'Signed in.'
+                this.message = "You're signed in."
                 void hydrateProfileFromIdentity(this.user)
               }
               if (event === 'SIGNED_OUT') {
@@ -87,7 +103,7 @@ export const useSessionStore = defineStore('session', {
         this.message = null
       } else {
         this.status = 'success'
-        this.message = 'Signed in successfully.'
+        this.message = "You're signed in."
       }
       this.loading = false
     },
@@ -103,7 +119,7 @@ export const useSessionStore = defineStore('session', {
         },
       })
       if (error) {
-        this.error = error.message
+        this.error = formatAuthError(error.message)
         this.status = 'error'
         this.message = null
         this.loading = false
@@ -127,7 +143,7 @@ export const useSessionStore = defineStore('session', {
         this.message = 'Check your email to confirm the account.'
       } else {
         this.status = 'success'
-        this.message = 'Account created and signed in.'
+        this.message = 'Account created—welcome to MNTS Asset Management.'
       }
       this.loading = false
     },
