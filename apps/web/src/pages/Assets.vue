@@ -3,9 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { useSessionStore } from '@/stores/session'
 
@@ -95,17 +94,10 @@ const profileLookup = ref<Record<string, Profile>>({})
 
 const search = ref('')
 const ownershipFilter = ref<'all' | 'owned' | 'borrowed'>('all')
-const isDialogOpen = ref(false)
 const isScanOpen = ref(false)
 const scanError = ref<string | null>(null)
 const isScanning = ref(false)
 const videoRef = ref<HTMLVideoElement | null>(null)
-const newAsset = ref({
-  name: '',
-  category: '',
-  location: '',
-  description: '',
-})
 
 const filteredAssets = computed(() => {
   const userId = sessionStore.user?.id ?? null
@@ -344,62 +336,6 @@ const clearFilters = () => {
   ownershipFilter.value = 'all'
 }
 
-const resetForm = () => {
-  newAsset.value = {
-    name: '',
-    category: '',
-    location: '',
-    description: '',
-  }
-}
-
-const addAsset = async () => {
-  const trimmedName = newAsset.value.name.trim()
-  if (!trimmedName) return
-
-  if (isSupabaseConfigured) {
-    loading.value = true
-    error.value = null
-    const { data, error: insertError } = await supabase
-      .from('assets')
-      .insert({
-        name: trimmedName,
-        category: newAsset.value.category || null,
-        location: newAsset.value.location || null,
-        description: newAsset.value.description?.trim() || null,
-      })
-      .select('id, asset_code, permanent_owner_id, name, category, location, description, updated_at')
-      .single()
-
-    if (insertError) {
-      error.value = insertError.message
-      loading.value = false
-      return
-    }
-
-    if (data) {
-      assets.value.unshift(mapAssetRecord(data as AssetRecord, new Map()))
-    }
-    loading.value = false
-  } else {
-    assets.value.unshift({
-      id: `A-${Math.floor(1000 + Math.random() * 9000)}`,
-      assetCode: `MNTS-ASSET-${Math.floor(100000 + Math.random() * 900000)}`,
-      name: trimmedName,
-      category: newAsset.value.category || 'Uncategorized',
-      location: newAsset.value.location || 'Unassigned',
-      updatedAt: new Date().toISOString().slice(0, 10),
-      description: newAsset.value.description?.trim(),
-      permanentOwnerId: sessionStore.user?.id ?? null,
-      borrowerId: null,
-      loanStatus: 'Available',
-    })
-  }
-
-  resetForm()
-  isDialogOpen.value = false
-}
-
 onMounted(fetchAssets)
 
 watch(isScanOpen, (isOpen) => {
@@ -449,7 +385,7 @@ onBeforeUnmount(() => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Dialog v-model:open="isDialogOpen">
+      <div>
         <div class="flex flex-col gap-4 rounded-3xl border border-slate-800/80 bg-slate-900/60 p-8 shadow-lg shadow-slate-950/30">
           <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -460,11 +396,9 @@ onBeforeUnmount(() => {
               </p>
             </div>
             <div class="hidden items-center gap-2 sm:flex">
-              <DialogTrigger as-child>
-                <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200">
-                  New Asset
-                </Button>
-              </DialogTrigger>
+              <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" as-child>
+                <RouterLink to="/assets/new">New Asset</RouterLink>
+              </Button>
             </div>
           </div>
 
@@ -571,11 +505,9 @@ onBeforeUnmount(() => {
               >
                 Scan
               </Button>
-              <DialogTrigger as-child>
-                <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200">
-                  New
-                </Button>
-              </DialogTrigger>
+              <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" as-child>
+                <RouterLink to="/assets/new">New</RouterLink>
+              </Button>
             </div>
             <div v-if="hasUser" class="flex flex-wrap gap-2">
               <Button
@@ -634,44 +566,6 @@ onBeforeUnmount(() => {
           </Button>
         </div>
 
-        <DialogContent class="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Register an asset</DialogTitle>
-            <DialogDescription>
-              Add the core details now. You can fill in maintenance and ownership later.
-            </DialogDescription>
-          </DialogHeader>
-          <div class="grid gap-4 py-2">
-            <div class="grid gap-2">
-              <Label for="asset-name">Asset name</Label>
-              <Input id="asset-name" v-model="newAsset.name" placeholder="Forklift FL-12" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="asset-category">Category</Label>
-              <Input id="asset-category" v-model="newAsset.category" placeholder="Material Handling" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="asset-location">Location</Label>
-              <Input id="asset-location" v-model="newAsset.location" placeholder="Dock 2" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="asset-notes">Notes</Label>
-              <Textarea id="asset-notes" v-model="newAsset.description" placeholder="Add any quick notes" />
-            </div>
-          </div>
-          <DialogFooter class="gap-2 sm:justify-end">
-            <Button
-              variant="outline"
-              class="border-slate-600/80 bg-slate-900 text-slate-100 hover:bg-slate-800 hover:text-white"
-              @click="isDialogOpen = false"
-            >
-              Cancel
-            </Button>
-            <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" @click="addAsset">
-              Save asset
-            </Button>
-          </DialogFooter>
-        </DialogContent>
         <div class="overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/60">
           <div class="hidden grid-cols-7 gap-4 px-6 py-4 text-xs uppercase tracking-[0.2em] text-slate-300 sm:grid">
             <span>Asset</span>
@@ -767,11 +661,9 @@ onBeforeUnmount(() => {
               <div v-if="assets.length === 0" class="space-y-3">
                 <p class="text-base font-semibold text-white">No assets yet.</p>
                 <p class="text-sm text-slate-300">Create the first asset to start tracking inventory.</p>
-                <DialogTrigger as-child>
-                  <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200">
-                    Create your first asset
-                  </Button>
-                </DialogTrigger>
+                <Button class="bg-amber-300 text-slate-950 hover:bg-amber-200" as-child>
+                  <RouterLink to="/assets/new">Create your first asset</RouterLink>
+                </Button>
               </div>
               <div v-else class="space-y-3">
                 <p class="text-base font-semibold text-white">No assets match these filters.</p>
@@ -788,7 +680,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
-      </Dialog>
+      </div>
     </div>
   </div>
 </template>

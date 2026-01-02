@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { isSupabaseConfigured, supabase } from '@/lib/supabase'
 import { useSessionStore } from '@/stores/session'
-import SidebarLayout from '../layouts/SidebarLayout.vue'
 
 type AssetRecord = {
   id: string
@@ -158,7 +157,7 @@ const profileSearchText = (profile: Profile) => {
 
 const profileName = (userId: string | null | undefined) => {
   if (!userId) return '—'
-  const profile = profileLookup.value[userId]
+  const profile = profileLookup.value[userId] ?? profiles.value.find((entry) => entry.id === userId)
   return profileLabel(profile) ?? userId
 }
 
@@ -510,7 +509,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <SidebarLayout>
+  <div class="mx-auto w-full max-w-6xl px-6 py-10">
     <div class="flex flex-col gap-6 pb-10">
       <div class="flex flex-col gap-4 rounded-3xl border border-slate-800/80 bg-slate-900/60 p-8 shadow-lg shadow-slate-950/30">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -721,7 +720,6 @@ onMounted(async () => {
               <div>
                 <p class="text-sm text-slate-300">Permanent owner</p>
                 <p class="text-base font-semibold text-white">{{ profileName(asset.permanentOwnerId) }}</p>
-                <p class="text-xs text-slate-400">{{ asset.permanentOwnerId }}</p>
               </div>
               <Button
                 variant="outline"
@@ -803,5 +801,5 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-  </SidebarLayout>
+  </div>
 </template>

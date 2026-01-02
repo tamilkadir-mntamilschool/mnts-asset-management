@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AssetsPage from '../pages/Assets.vue'
+import AssetCreatePage from '../pages/AssetCreate.vue'
 import AssetDetailPage from '../pages/AssetDetail.vue'
 import AssetPrintPage from '../pages/AssetPrint.vue'
 import AuthPage from '../pages/Auth.vue'
@@ -17,6 +18,12 @@ const router = createRouter({
       path: '/assets',
       name: 'assets',
       component: AssetsPage,
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/assets/new',
+      name: 'asset-create',
+      component: AssetCreatePage,
       meta: { requiresAuth: true },
     },
     {
