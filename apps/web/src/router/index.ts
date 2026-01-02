@@ -63,6 +63,10 @@ router.beforeEach(async (to) => {
   }
 
   if (to.name === 'auth' && sessionStore.user) {
+    const redirect = typeof to.query.redirect === 'string' ? to.query.redirect : null
+    if (redirect && redirect.startsWith('/')) {
+      return redirect
+    }
     return { name: 'assets' }
   }
 })

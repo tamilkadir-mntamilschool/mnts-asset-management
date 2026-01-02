@@ -107,15 +107,17 @@ export const useSessionStore = defineStore('session', {
       }
       this.loading = false
     },
-    async signInWithGoogle() {
+    async signInWithGoogle(redirectPath?: string | null) {
       this.loading = true
       this.error = null
       this.status = 'loading'
       this.message = null
+      const normalizedRedirect =
+        redirectPath && redirectPath.startsWith('/') ? `?redirect=${encodeURIComponent(redirectPath)}` : ''
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `${window.location.origin}/auth${normalizedRedirect}`,
         },
       })
       if (error) {

@@ -1,24 +1,45 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { useSessionStore } from '@/stores/session'
 
 const sessionStore = useSessionStore()
 const oauthError = ref<string | null>(null)
+const route = useRoute()
+const redirectPath = computed(() => (typeof route.query.redirect === 'string' ? route.query.redirect : null))
 
-const handleGoogleSignIn = async () => {
-  await sessionStore.signInWithGoogle()
-}
-
-onMounted(() => {
+const syncOauthError = () => {
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const searchParams = new URLSearchParams(window.location.search.replace(/^\?/, ''))
   const errorDescription = hashParams.get('error_description') || searchParams.get('error_description')
   const error = hashParams.get('error') || searchParams.get('error')
   if (error || errorDescription) {
     oauthError.value = 'Access denied. This Google account is not authorized.'
+    sessionStore.loading = false
+    sessionStore.status = 'error'
+    sessionStore.message = null
+    sessionStore.error = null
+  } else {
+    oauthError.value = null
   }
+}
+
+const handleGoogleSignIn = async () => {
+  oauthError.value = null
+  await sessionStore.signInWithGoogle(redirectPath.value)
+}
+
+onMounted(() => {
+  syncOauthError()
 })
+
+watch(
+  () => route.fullPath,
+  () => {
+    syncOauthError()
+  },
+)
 </script>
 
 <template>
