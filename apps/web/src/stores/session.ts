@@ -156,9 +156,17 @@ export const useSessionStore = defineStore('session', {
       this.message = null
       const { error } = await supabase.auth.signOut()
       if (error) {
-        this.error = error.message
-        this.status = 'error'
-        this.message = null
+        if ('status' in error && error.status === 403) {
+          await supabase.auth.signOut({ scope: 'local' })
+          this.session = null
+          this.user = null
+          this.status = 'success'
+          this.message = 'Signed out.'
+        } else {
+          this.error = error.message
+          this.status = 'error'
+          this.message = null
+        }
       } else {
         this.session = null
         this.user = null
